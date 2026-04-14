@@ -10,56 +10,54 @@ public class ServidorJogo {
     
     private ServerSocket servidor;
     
-    private Socket jogadorX;
-    private ObjectOutputStream entradaJogadorX;
-    private ObjectInputStream saidaJogadorX;
-//   OutputStream -> envia dados
-//   InputStream -> recebe dados 
-    private Socket jogadorO;
-    private ObjectOutputStream entradaJogadorO;
-    private ObjectInputStream saidaJogadorO;
+    private Socket magoBranco;
+    private ObjectOutputStream entradaMB; // Entrada jogador mago branco
+    private ObjectInputStream saidaMB; // saida jogador mago branco
+    private Socket magoNegro; 
+    private ObjectOutputStream entradaMN; // entrada jogador mago negro
+    private ObjectInputStream saidaMN; // saida jogador mago negro
     
     // iniciar servidor
     public void iniciar() throws Exception {
         
         servidor = new ServerSocket( ConfigTXT.getPorta(), 2, InetAddress.getByName( ConfigTXT.getIp() ) );
         // porta, máximo de conexoes (2 jogadores), ip
-        System.out.println("Servidor JogoDaVelha Inicializado ( " + servidor + " ).\n");
+        System.out.println("Servidor RPG Inicializado ( " + servidor + " ).\n");
         
     }
     
     // conectar jogadores
     public void conectar() throws Exception {
         
-        System.out.println( "Esperando por Conexão (Jogador X)." );
-        jogadorX =  servidor.accept();
-        System.out.println( "Conexão Recebida: " + jogadorX.toString() + ":" + jogadorX.getPort() + "\n" );
+        System.out.println( "Esperando por Conexão (Mago Branco)." );
+        magoBranco =  servidor.accept();
+        System.out.println( "Conexão Recebida: " + magoBranco.toString() + ":" + magoBranco.getPort() + "\n" );
         
-        entradaJogadorX = new ObjectOutputStream( jogadorX.getOutputStream() );
-        entradaJogadorX.flush();        
-        entradaJogadorX.writeObject("X;true");
+        entradaMB = new ObjectOutputStream( magoBranco.getOutputStream() );
+        entradaMB.flush();        
+        entradaMB.writeObject("Mago Branco;true");
         
-        System.out.println( "Esperando por Conexão (Jogador O)." );
-        jogadorO =  servidor.accept();
-        System.out.println( "Conexão Recebida: " + jogadorO.toString() + ":" + jogadorX.getPort() + "\n" );
+        System.out.println( "Esperando por Conexão (Mago Negro)." );
+        magoNegro =  servidor.accept();
+        System.out.println( "Conexão Recebida: " + magoNegro.toString() + ":" + magoBranco.getPort() + "\n" );
         
-        entradaJogadorO = new ObjectOutputStream( jogadorO.getOutputStream() );
-        entradaJogadorO.flush();        
-        entradaJogadorO.writeObject("O;false");
+        entradaMN = new ObjectOutputStream( magoNegro.getOutputStream() );
+        entradaMN.flush();        
+        entradaMN.writeObject("Mago Negro;false");
         
     }
     
     // iniciar comunicação entre jogadores
     public void comunicar() throws Exception {
         
-        saidaJogadorX = new ObjectInputStream( jogadorX.getInputStream() );
-        saidaJogadorO = new ObjectInputStream( jogadorO.getInputStream() );
+        saidaMB = new ObjectInputStream( magoBranco.getInputStream() );
+        saidaMN = new ObjectInputStream( magoNegro.getInputStream() );
         
-        Thread thread1 = new Thread( new GerenciadorDeJogadas(saidaJogadorO, entradaJogadorX) );
-        //Jogador O -> servidor -> Jogador X
+        Thread thread1 = new Thread( new GerenciadorDeJogadas(saidaMN, entradaMB) );
+       
         
-        Thread thread2 = new Thread( new GerenciadorDeJogadas(saidaJogadorX, entradaJogadorO) );
-        //Jogador X -> servidor -> Jogador O
+        Thread thread2 = new Thread( new GerenciadorDeJogadas(saidaMB, entradaMN) );
+        
         
         thread1.start();
         thread2.start();

@@ -1,23 +1,43 @@
 package rede.jogo;
 
 public class Jogador {
-    private String nome;
     private int vida;
+    private int armadura;
 
-    public Jogador(String nome) {
-        this.nome = nome;
-        this.vida = 100;
+    public Jogador() {
+        setVida(vida);
+        setArmadura(armadura);
     }
 
-    public void receberDano(int dano) {
-        vida -= dano;
+    // logica pra receber o dano com a armadura
+    public String receberDano(int dano) {
+        if (armadura > 0) {
+            int resto = armadura - dano;
+
+            if (resto >= 0) {
+                armadura -= dano;
+                return "Armadura absorveu o dano!";
+            } else {
+                armadura = 0;
+                vida += resto;
+                return "Armadura quebrou!";
+            }
+        } else {
+            vida -= dano;
+            return "Dano direto na vida!";
+        }
     }
 
-//    public void curar(int valor) {
-//        vida += valor;
-//    }
-
-    public int getVida() {
-        return vida;
+    public void setVida(int vida)
+    {
+        this.vida = vida;
     }
+
+    public void setArmadura(int armadura)
+    {
+        this.armadura = armadura;
+    }
+
+    public int getVida() { return vida; }
+    public int getArmadura() { return armadura; }
 }

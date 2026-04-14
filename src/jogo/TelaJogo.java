@@ -1,120 +1,197 @@
 package rede.jogo;
 
+import javax.swing.*;
+import java.awt.event.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
-import java.awt.Color;
-import java.awt.Font;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+public class TelaJogo {
 
-public class TelaJogo{
     JFrame janela;
-    JPanel tituloPanel;
-    JLabel tituloLabel;
-    Font tituloFonte = new Font("Serif", Font.PLAIN, 90);
-    
-    // acho q pra colocar os bonequin, talvez usar dois botoes? 
-    
-    public TelaJogo(){
-        
-        //fundo
-        janela = new JFrame();
-        janela.setSize(800,600);
+    JTextArea areaLog;
+    JProgressBar vidaBar, armaduraBar;
+
+    JButton fraco, medio, forte;
+
+    Jogador jogador;
+
+    // REDE (igual ao professor)
+    private Socket servidorConexao;
+    private ObjectInputStream servidorEntrada;
+    private ObjectOutputStream servidorSaida;
+
+    private boolean suaVez;
+    private boolean fim;
+
+    public TelaJogo() throws Exception {
+
+        jogador = new Jogador();
+
+        // ===== INTERFACE =====
+        janela = new JFrame("RPG Multiplayer");
+        janela.setSize(800, 600);
         janela.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Pra colocar imagem
-        ImageIcon imagem = new ImageIcon(
-            getClass().getResource("/rede/jogo/imagem/fundo.png")
-        );
-        JLabel fundo = new JLabel(imagem);
-        fundo.setLayout(null); 
-        janela.setContentPane(fundo); 
+        janela.setLayout(null);
+
+        vidaBar = new JProgressBar(0, 100);
+        vidaBar.setBounds(50, 50, 200, 20);
+        janela.add(vidaBar);
+
+        armaduraBar = new JProgressBar(0, 50);
+        armaduraBar.setBounds(50, 80, 200, 20);
+        janela.add(armaduraBar);
+
+        areaLog = new JTextArea();
+        areaLog.setEditable(false);
+        JScrollPane scroll = new JScrollPane(areaLog);
+        scroll.setBounds(50, 400, 500, 120);
+        janela.add(scroll);
+
+        fraco = new JButton("Ataque Fraco");
+        fraco.setBounds(580, 400, 150, 30);
+        janela.add(fraco);
+
+        medio = new JButton("Ataque Médio");
+        medio.setBounds(580, 440, 150, 30);
+        janela.add(medio);
+
+        forte = new JButton("Ataque Forte");
+        forte.setBounds(580, 480, 150, 30);
+        janela.add(forte);
+
+        configurarEventos();
+
+        atualizarTela();
 
         janela.setVisible(true);
-        
-        // jogadores
-        ImageIcon playerImg = new ImageIcon(
-            getClass().getResource("/rede/jogo/imagem/player1.png") // 100 x 100
-        );
 
-        JLabel player = new JLabel(playerImg);
-        player.setBounds(400, 300, playerImg.getIconWidth(), playerImg.getIconHeight());
-
-        fundo.add(player);
-        
-        // titulo aventura
-        tituloPanel = new JPanel();
-        tituloPanel.setBounds(100,100,600,150);
-        tituloPanel.setOpaque(false); // pra deixar o fundo transparente
-        tituloLabel = new JLabel("AVENTURA");
-        tituloLabel.setForeground(Color.white);
-        tituloLabel.setFont(tituloFonte);
-        
-        tituloPanel.add(tituloLabel);
-        fundo.add(tituloPanel);
+        // ===== REDE =====
+        conectar();
+        escutarServidor();
     }
-    
+
+    // ================= EVENTOS =================
+    private void configurarEventos() {
+
+        fraco.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                enviarJogada("ATAQUE_FRACO");
+            }
+        });
+
+        medio.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                enviarJogada("ATAQUE_MEDIO");
+            }
+        });
+
+        forte.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                enviarJogada("ATAQUE_FORTE");
+            }
+        });
+    }
+
+    // ================= ENVIO =================
+    private void enviarJogada(String msg) {
+
+        if (!suaVez || fim) {
+            areaLog.append("Espere sua vez!\n");
+            return;
+        }
+
+        try {
+            servidorSaida.writeObject(msg);
+            servidorSaida.flush();
+
+            areaLog.append("Você usou: " + msg + "\n");
+
+            suaVez = false;
+
+            checarTermino();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= CONEXÃO =================
+    private void conectar() throws Exception {
+
+        servidorConexao = new Socket(ConfigTXT.getIp(), ConfigTXT.getPorta());
+
+        servidorSaida = new ObjectOutputStream(servidorConexao.getOutputStream());
+        servidorEntrada = new ObjectInputStream(servidorConexao.getInputStream());
+
+        String mensagem = (String) servidorEntrada.readObject();
+        String[] info = mensagem.split(";");
+
+        suaVez = info[1].equals("true");
+        fim = false;
+
+        if (suaVez) {
+            areaLog.append("Sua vez!\n");
+        } else {
+            areaLog.append("Espere sua vez...\n");
+        }
+    }
+
+    // ================= RECEBIMENTO =================
+    private void escutarServidor() {
+
+        new Thread(() -> {
+            while (!fim) {
+                try {
+
+                    if (!suaVez) {
+
+                        String mensagem = (String) servidorEntrada.readObject();
+
+                        processarMensagem(mensagem);
+
+                        suaVez = true;
+
+                        areaLog.append("Sua vez!\n");
+
+                        checarTermino();
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    // ================= PROCESSAMENTO =================
+    private void processarMensagem(String msg) {
+
+        if (msg.equals("ATAQUE_FRACO")) {
+            jogador.receberDano(10);
+        } else if (msg.equals("ATAQUE_MEDIO")) {
+            jogador.receberDano(20);
+        } else if (msg.equals("ATAQUE_FORTE")) {
+            jogador.receberDano(35);
+        }
+
+        areaLog.append("Você recebeu: " + msg + "\n");
+
+        atualizarTela();
+    }
+
+    // ================= TELA =================
+    private void atualizarTela() {
+        vidaBar.setValue(jogador.getVida());
+        armaduraBar.setValue(jogador.getArmadura());
+    }
+
+    // ================= FIM =================
+    private void checarTermino() {
+
+        if (jogador.getVida() <= 0) {
+            fim = true;
+            areaLog.append("Você perdeu!\n");
+        }
+    }
 }
-//
-//import javax.swing.*;
-//import java.awt.event.ActionEvent;
-//import java.awt.event.ActionListener;
-////TESTANDO INTERFACE JAVA
-//public class TelaJogo extends JFrame {
-//
-//    private JButton btnAtaque;
-//    private JButton btnAtaqueForte;
-//    private JButton btnDefesa;
-//
-//    private JLabel lblVida;
-//
-//    private Jogador jogador;
-//
-//    public TelaJogo() {
-//
-//        jogador = new Jogador("Você");
-//
-//        setTitle("RPG - Batalha");
-//        setSize(300, 300);
-//        setLayout(null);
-//        setDefaultCloseOperation(EXIT_ON_CLOSE);
-//
-//        lblVida = new JLabel("Vida: " + jogador.getVida());
-//        lblVida.setBounds(50, 20, 200, 30);
-//        add(lblVida);
-//
-//        btnAtaque = new JButton("Ataque");
-//        btnAtaque.setBounds(50, 70, 200, 30);
-//        add(btnAtaque);
-//
-//        btnAtaqueForte = new JButton("Ataque Forte");
-//        btnAtaqueForte.setBounds(50, 110, 200, 30);
-//        add(btnAtaqueForte);
-//
-//        btnDefesa = new JButton("Defesa");
-//        btnDefesa.setBounds(50, 150, 200, 30);
-//        add(btnDefesa);
-//
-//        // ações dos botões
-//        btnAtaque.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                JOptionPane.showMessageDialog(null, "Você atacou!");
-//            }
-//        });
-//
-//        btnAtaqueForte.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                JOptionPane.showMessageDialog(null, "Ataque forte!");
-//            }
-//        });
-//
-//        btnDefesa.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                JOptionPane.showMessageDialog(null, "Defesa ativada!");
-//            }
-//        });
-//
-//        setVisible(true);
-//    }
-//}
