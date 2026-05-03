@@ -166,19 +166,22 @@ public class TelaJogo {
 
     // ================= PROCESSAMENTO =================
     private void processarMensagem(String msg) {
+        
+    String[] partes = msg.split(";");
+    
+    if (partes[0].equals("ATAQUE")) {
 
-        if (msg.equals("ATAQUE_FRACO")) {
-            jogador.receberDano(10);
-        } else if (msg.equals("ATAQUE_MEDIO")) {
-            jogador.receberDano(20);
-        } else if (msg.equals("ATAQUE_FORTE")) {
-            jogador.receberDano(35);
-        }
+        int rolagem = Integer.parseInt(partes[1]);
+        int dano = Integer.parseInt(partes[2]);
 
-        areaLog.append("Você recebeu: " + msg + "\n");
+        String resultado = jogador.receberDano(rolagem, dano);
 
-        atualizarTela();
+        areaLog.append("Você sofreu um ataque!\n");
+        areaLog.append(resultado + "\n");
     }
+
+    atualizarTela();
+}
 
     // ================= TELA =================
     private void atualizarTela() {

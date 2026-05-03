@@ -5,39 +5,26 @@ public class Jogador {
     private int armadura;
 
     public Jogador() {
-        setVida(vida);
-        setArmadura(armadura);
+        this.vida = 50;      // determina a vida inicial do jogador
+        this.armadura = 11;  // valor médio de 11 (para equilibrar entre acerto e erro, mas podemos mudar depois também)
     }
 
-    // logica pra receber o dano com a armadura
-    public String receberDano(int dano) {
-        if (armadura > 0) {
-            int resto = armadura - dano;
-
-            if (resto >= 0) {
-                armadura -= dano;
-                return "Armadura absorveu o dano!";
-            } else {
-                armadura = 0;
-                vida += resto;
-                return "Armadura quebrou!";
-            }
-        } else {
+    // lógica pra receber o ataque
+    public String receberDano(int rolagemAtaque, int dano) {
+        
+        if (rolagemAtaque >= armadura) {
             vida -= dano;
-            return "Dano direto na vida!";
+            return "ACERTOU! Dano: " + dano + " | Vida restante: " + vida;
+        } else {
+            return "ERROU! Nenhum dano causado.";
         }
     }
 
-    public void setVida(int vida)
-    {
-        this.vida = vida;
+    public int getVida(){
+        return vida; 
     }
-
-    public void setArmadura(int armadura)
-    {
-        this.armadura = armadura;
+    
+    public int getArmadura() {
+        return armadura; 
     }
-
-    public int getVida() { return vida; }
-    public int getArmadura() { return armadura; }
 }
