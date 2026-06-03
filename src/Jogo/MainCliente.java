@@ -1,7 +1,10 @@
-package rede.jogo;
+
+import Jogo.JogoGUI;
 
 public class MainCliente {
     public static void main(String[] args) throws Exception {
-        new TelaJogo();
+        
+          JogoGUI jogo = new JogoGUI();
+        
     }
 }

@@ -1,5 +1,3 @@
-package aulas.rede;
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -9,7 +7,7 @@ public class Cliente {
     public static void main(String[] args) throws Exception {
         
         int porta = 12345;
-        InetAddress endereco = InetAddress.getByName("10.105.68.107");
+        InetAddress endereco = InetAddress.getByName("10.105.70.236");
         
         Socket conexao = new Socket(endereco, porta);
         System.out.println( "Conexão Realizada: " + conexao.getLocalAddress().getHostName() + ":" + conexao.getLocalPort() + "\n" );
@@ -25,7 +23,7 @@ public class Cliente {
         String mensagem;        
         mensagem = (String) input.readObject();
         System.out.println( "Mensagem \"" + mensagem +"\" Recebida.\n" );
-       
+        
         mensagem = "Olá Servidor.";        
         output.writeObject(mensagem);
         output.flush();
