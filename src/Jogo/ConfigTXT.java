@@ -1,11 +1,8 @@
-package rede.jogo;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
-// carrega configurações do jogo. lê um arquivo config e pega o ip e a porta.
-public class ConfigTXT { // essa classe so serve para ler e fornecer configs
+public class ConfigTXT {
     
     private static String ip;
     private static int porta = -1;
@@ -13,27 +10,27 @@ public class ConfigTXT { // essa classe so serve para ler e fornecer configs
     private ConfigTXT() {
     }
     
-    private static void readConfig() { //método que lê o arquivo
+    private static void readConfig() {
         
         File file = new File("config.txt");
-        if( file.exists() ) { // verifica se ele existe
+        if( file.exists() ) {
             
             try {
                 
                 FileReader reader = new FileReader(file);
-                BufferedReader buffer = new BufferedReader(reader);// prepara-se pra ler o arquivo linha por linha
+                BufferedReader buffer = new BufferedReader(reader);
                 
                 ip = buffer.readLine();
-                porta =  Integer.parseInt( buffer.readLine() ); // pega os dados 
+                porta =  Integer.parseInt( buffer.readLine() );
                 
-            } catch ( Exception ex ) { // se der erro ele mostra no console
+            } catch ( Exception ex ) {
                 ex.printStackTrace();
             }
             
         }
     }
 
-    public static String getIp() { // método para "devolver o ip"
+    public static String getIp() {
         
         if ( ip == null )
             readConfig();
@@ -41,7 +38,7 @@ public class ConfigTXT { // essa classe so serve para ler e fornecer configs
         return ip;
     }
     
-    public static int getPorta() { // mesma lógica do ip
+    public static int getPorta() {
         
         if ( porta == -1 )
             readConfig();
