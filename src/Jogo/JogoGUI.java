@@ -1,6 +1,10 @@
 package Jogo;
 
 import java.awt.FlowLayout;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -10,10 +14,14 @@ public class JogoGUI extends JFrame {
     private JButton cara;
     private JButton coroa;
     private JButton jogarMoeda;
+    
+    private Socket servidorConexao;
+    private ObjectOutputStream servidorSaida;
+    private ObjectInputStream servidorEntrada;
 
     private int escolha;
 
-    public JogoGUI() {
+    public JogoGUI() throws Exception{
 
         setTitle("Cara ou Coroa");
         setSize(300, 150);
@@ -23,6 +31,7 @@ public class JogoGUI extends JFrame {
         construirInterface();
 
         iniciar();
+        conectar();
 
         setVisible(true);
     }
@@ -69,28 +78,25 @@ public class JogoGUI extends JFrame {
                 "Você escolheu Coroa.");
     }
 
-    private void jogar() {
-
-        if (escolha == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Escolha Cara ou Coroa primeiro!");
-            return;
+    private void jogar(){
+        try{
+            if (escolha == -1) {
+                JOptionPane.showMessageDialog(this,
+                        "Escolha Cara ou Coroa primeiro!");
+                return;
+            }
+            desabilitarOpcoes();
+            enviarEscolha();
+            receberResultado();
+           
+        }catch(Exception ex){
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+            dispose();
+            
         }
-
-        desabilitarOpcoes();
-
-        int resultado = jogarMoeda();
-
-        mostrarResultado(resultado);
-
-        checarResultado(resultado);
     }
 
-    private int jogarMoeda() {
-
-        return (int) (Math.random() * 2);
-    }
-
+    
     private void mostrarResultado(int resultado) {
 
         String lado;
@@ -156,13 +162,42 @@ public class JogoGUI extends JFrame {
     }
     
     
-// Ficaria faltando implementar os metodos 
-//    private void conectar();
-//    private void enviarEscolha();
-//    private void receberResultado();
+    private void conectar()throws Exception{
+        servidorConexao = new Socket(InetAddress.getByName(ConfigTXT.getIp()), ConfigTXT.getPorta());
+        
+        servidorSaida = new ObjectOutputStream(servidorConexao.getOutputStream());
+        servidorSaida.flush();
+        servidorEntrada = new ObjectInputStream(servidorConexao.getInputStream());
+        
+        String mensagem = (String) servidorEntrada.readObject();
+        String[] info = mensagem.split(";");
+        
+        if(info[1].equals("true")){
+            habilitarOpcoes();
+        }else{
+            desabilitarOpcoes();
+        }
+    }
+    
+    private void enviarEscolha() throws Exception{
+        servidorSaida.writeObject(escolha);
+        servidorSaida.flush();
+    }
+    
+    private void receberResultado() throws Exception{
+        
+        int resultado = (int) servidorEntrada.readObject();
+        mostrarResultado(resultado);
+        checarResultado(resultado);
+
+
+    }
 
     public static void main(String[] args) {
-
-        new JogoGUI();
+        try{
+            new JogoGUI();
+        }catch(Exception ex){
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }     
     }
 }

@@ -1,4 +1,4 @@
-
+package Jogo;
 import Jogo.JogoGUI;
 
 public class MainCliente {

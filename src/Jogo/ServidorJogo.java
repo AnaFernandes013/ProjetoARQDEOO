@@ -1,4 +1,4 @@
-
+package Jogo;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -46,18 +46,38 @@ public class ServidorJogo {
         
     }
     
-    // iniciar comunicação entre jogadores
+    // sorteia e envia os resultados
+    public void sortear() throws Exception{      
+        
+        // Recebe a escolha de cada jogador (0 = Cara e  1 = Coroa)
+        int escolhaJogador1 = (int) saidaJogador1.readObject();
+        int escolhaJogador2 = (int) saidaJogador2.readObject();
+            
+        int resultado = (int) (Math.random() * 2);
+        
+        entradaJogador1.writeObject(resultado);
+        entradaJogador1.flush();
+        entradaJogador2.writeObject(resultado);
+        entradaJogador2.flush();
+        
+    }
+
     public void comunicar() throws Exception {
         
-        saidaJogador1 = new ObjectInputStream( jogador1.getInputStream() );
-        saidaJogador2 = new ObjectInputStream( jogador2.getInputStream() );
+        saidaJogador1 = new ObjectInputStream(jogador1.getInputStream());
+        saidaJogador2 = new ObjectInputStream(jogador2.getInputStream());
         
-//        Thread thread1 = new Thread( new GerenciadorDeJogadas(saidaJogadorO, entradaJogadorX) );
-//        Thread thread2 = new Thread( new GerenciadorDeJogadas(saidaJogadorX, entradaJogadorO) );
-        
-//        thread1.start();
-//        thread2.start();
-        
+        new Thread(() ->{
+            while(true){
+                try{
+                    sortear();          
+                }catch(Exception ex){
+                    System.out.println("Jogaor desconectou");
+                    break;
+                }
+            }     
+        }).start();
+                            
     }
 
 }

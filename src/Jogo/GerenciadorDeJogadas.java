@@ -1,3 +1,4 @@
+package Jogo;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
@@ -21,8 +22,10 @@ public class GerenciadorDeJogadas implements Runnable {
 
                 entradaJogador2.writeObject( saidaJogador1.readObject() );
                 
-            } catch(Exception ex) {
+            } catch(Exception ex) {          
+                System.out.println("Um jogador se desconectou"); 
                 ex.printStackTrace();
+                break;
             }
         }
     }    
