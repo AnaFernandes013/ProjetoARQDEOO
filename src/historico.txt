@@ -1,0 +1,5 @@
+15/06/2026 03:05:10 | Jogador 1: Coroa | Jogador 2: Cara | Moeda: Coroa | Vencedor: Jogador 1
+15/06/2026 03:05:10 | Jogador 1: Coroa | Jogador 2: Cara | Moeda: Coroa | Vencedor: Jogador 1
+15/06/2026 03:05:10 | Jogador 1: Cara | Jogador 2: Coroa | Moeda: Coroa | Vencedor: Jogador 2
+15/06/2026 03:05:10 | Jogador 1: Cara | Jogador 2: Coroa | Moeda: Cara | Vencedor: Jogador 1
+15/06/2026 03:05:10 | Jogador 1: Coroa | Jogador 2: Cara | Moeda: Coroa | Vencedor: Jogador 1

@@ -11,7 +11,7 @@ public class Servidor {
         int porta = 12345;
         int backlog = 2;
         InetAddress endereco = InetAddress.getByName("10.105.70.236");
-
+        
         ServerSocket servidor;
         servidor = new ServerSocket(porta, backlog, endereco);
         System.out.println("Servidor Inicializado ( " + servidor + " ).\n");

@@ -49,17 +49,54 @@ public class ServidorJogo {
     // sorteia e envia os resultados
     public void sortear() throws Exception{      
         
-        // Recebe a escolha de cada jogador (0 = Cara e  1 = Coroa)
+        // jogador 1 escolhe a opção, e o 2 fica ocm a opção que sobrou
         int escolhaJogador1 = (int) saidaJogador1.readObject();
-        int escolhaJogador2 = (int) saidaJogador2.readObject();
-            
+        int sinalJogador2   = (int) saidaJogador2.readObject(); // ignorado de propósito
+        
+        int ladoJogador1 = escolhaJogador1;
+        int ladoJogador2 = 1 - escolhaJogador1; // lado oposto, automático
+        
         int resultado = (int) (Math.random() * 2);
         
-        entradaJogador1.writeObject(resultado);
+        // envia "resultado;ladoDoProprioJogador" para cada cliente
+        entradaJogador1.writeObject(resultado + ";" + ladoJogador1);
         entradaJogador1.flush();
-        entradaJogador2.writeObject(resultado);
+        entradaJogador2.writeObject(resultado + ";" + ladoJogador2);
         entradaJogador2.flush();
         
+        registrarPartida(ladoJogador1, ladoJogador2, resultado);
+        
+    }
+    
+    // converte 0/1 em texto
+    private String lado(int valor) {
+        return (valor == 0) ? "Cara" : "Coroa";
+    }
+    
+    // grava o resultado de cada partida (com o ganhador) em arquivo texto
+    private void registrarPartida(int ladoJogador1, int ladoJogador2, int resultado) {
+        
+        // como os lados sao opostos, sempre terá um vencedor
+        String vencedor = (resultado == ladoJogador1) ? "Jogador 1" : "Jogador 2";
+        
+        String data = java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss") );
+        
+        String linha = data
+                + "  Jogador 1 escolheu " + lado(ladoJogador1)
+                + " e sobrou " + lado(ladoJogador2) + " para o Jogador 2 "
+                + " | Resultado: " + lado(resultado)
+                + " | Vencedor: " + vencedor;
+        
+        try ( java.io.BufferedWriter escritor =
+                new java.io.BufferedWriter( new java.io.FileWriter("historico.txt", true) ) ) {
+            escritor.write(linha);
+            escritor.newLine();
+        } catch (Exception ex) {
+            System.out.println("Erro ao gravar o historico: " + ex.getMessage());
+        }
+        
+        System.out.println(linha);
     }
 
     public void comunicar() throws Exception {

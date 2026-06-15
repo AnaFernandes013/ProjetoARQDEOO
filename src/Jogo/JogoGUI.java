@@ -8,6 +8,7 @@ import java.net.Socket;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 public class JogoGUI extends JFrame {
 
@@ -20,6 +21,7 @@ public class JogoGUI extends JFrame {
     private ObjectInputStream servidorEntrada;
 
     private int escolha;
+    private boolean podeEscolher; // true = Jogador 1 (escolhe lado); false = Jogador 2 (lado automatico)
 
     public JogoGUI() throws Exception{
 
@@ -57,71 +59,66 @@ public class JogoGUI extends JFrame {
 
         escolha = -1; // flag
 
-        habilitarOpcoes();
+        configurarBotoes();
 
-        System.out.println("Escolha Cara ou Coroa.");
+        System.out.println("Nova rodada.");
     }
 
     private void escolherCara() {
 
         escolha = 0;
 
-        JOptionPane.showMessageDialog(this,
-                "Você escolheu Cara.");
+        JOptionPane.showMessageDialog(this, "Você escolheu Cara.");
     }
 
     private void escolherCoroa() {
 
         escolha = 1;
 
-        JOptionPane.showMessageDialog(this,
-                "Você escolheu Coroa.");
+        JOptionPane.showMessageDialog(this, "Você escolheu Coroa.");
     }
 
     private void jogar(){
+        // só o jogador 1 escolhe uma opção, pois o segundo jogador ficará com o resultado restante
+        //o jogador 2 só precisa clicar em jogar a moeda
+        if (podeEscolher && escolha == -1) {
+            JOptionPane.showMessageDialog(this, "Escolha Cara ou Coroa primeiro!");
+            return;
+        }
+
         try{
-            if (escolha == -1) {
-                JOptionPane.showMessageDialog(this,
-                        "Escolha Cara ou Coroa primeiro!");
-                return;
-            }
             desabilitarOpcoes();
             enviarEscolha();
-            receberResultado();
-           
         }catch(Exception ex){
             JOptionPane.showMessageDialog(this, ex.getMessage());
             dispose();
-            
+            return;
         }
+
+        //espera o resultado em uma thread separada para a janela nao travar enquanto o outro jogador ainda nao jogou
+        
+        new Thread(this::receberResultado).start();
     }
 
     
-    private void mostrarResultado(int resultado) {
-
-        String lado;
-
-        if (resultado == 0) {
-            lado = "Cara";
-        } else {
-            lado = "Coroa";
-        }
-
-        JOptionPane.showMessageDialog(this,
-                "A moeda caiu em: " + lado);
+    private String nomeLado(int valor) {
+        return (valor == 0) ? "Cara" : "Coroa";
     }
 
-    private void checarResultado(int resultado) {
+    private void mostrarResultado(int resultado, int meuLado) {
 
-        if (resultado == escolha) {
+        JOptionPane.showMessageDialog(this, "A moeda caiu em: " + nomeLado(resultado) + "\nSeu lado: " + nomeLado(meuLado));
+    }
 
-            JOptionPane.showMessageDialog(this,
-                    "Parabéns! Você acertou!");
+    private void checarResultado(int resultado, int meuLado) {
+
+        if (resultado == meuLado) {
+
+            JOptionPane.showMessageDialog(this, "Parabéns! Você venceu!");
 
         } else {
 
-            JOptionPane.showMessageDialog(this,
-                    "Que pena! Você errou!");
+            JOptionPane.showMessageDialog(this, "Que pena! Você perdeu!");
 
         }
 
@@ -131,9 +128,7 @@ public class JogoGUI extends JFrame {
     private void checarReinicio() {
 
         int resposta = JOptionPane.showConfirmDialog(
-                this,
-                "Deseja jogar novamente?",
-                "Novo Jogo",
+                this, "Deseja jogar novamente?", "Novo Jogo",
                 JOptionPane.YES_NO_OPTION
         );
 
@@ -145,6 +140,14 @@ public class JogoGUI extends JFrame {
 
             dispose();
         }
+    }
+
+    // habilita os botoes de escolha apenas pro jogador 1
+    // jogador 2 apenas clica em jogar a moeda
+    private void configurarBotoes() {
+        jogarMoeda.setEnabled(true);
+        cara.setEnabled(podeEscolher);
+        coroa.setEnabled(podeEscolher);
     }
 
     private void habilitarOpcoes() {
@@ -172,11 +175,17 @@ public class JogoGUI extends JFrame {
         String mensagem = (String) servidorEntrada.readObject();
         String[] info = mensagem.split(";");
         
-        if(info[1].equals("true")){
-            habilitarOpcoes();
-        }else{
-            desabilitarOpcoes();
+        podeEscolher = info[1].equals("true");
+
+        if (podeEscolher) {
+            setTitle("Cara ou Coroa - Jogador 1 (você escolhe o lado)");
+        } else {
+            setTitle("Cara ou Coroa - Jogador 2 (lado automático)");
+            JOptionPane.showMessageDialog(this, "Você é o Jogador 2.\nSeu lado será sempre o OPOSTO ao do Jogador 1 (automático)."
+                            + "\nÉ só clicar em \"Jogar Moeda\".");
         }
+
+        configurarBotoes();
     }
     
     private void enviarEscolha() throws Exception{
@@ -184,13 +193,27 @@ public class JogoGUI extends JFrame {
         servidorSaida.flush();
     }
     
-    private void receberResultado() throws Exception{
-        
-        int resultado = (int) servidorEntrada.readObject();
-        mostrarResultado(resultado);
-        checarResultado(resultado);
+    private void receberResultado() {
 
+        try {
 
+            String mensagem = (String) servidorEntrada.readObject();
+            String[] partes = mensagem.split(";");
+            int resultado = Integer.parseInt(partes[0]);
+            int meuLado = Integer.parseInt(partes[1]);
+
+            SwingUtilities.invokeLater(() -> {
+                mostrarResultado(resultado, meuLado);
+                checarResultado(resultado, meuLado);
+            });
+
+        } catch (Exception ex) {
+
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(this, "O oponente saiu ou a conexao foi encerrada.");
+                dispose();
+            });
+        }
     }
 
     public static void main(String[] args) {
