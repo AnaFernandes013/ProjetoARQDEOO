@@ -15,7 +15,7 @@ public class JogoGUI extends JFrame {
     private JButton cara;
     private JButton coroa;
     private JButton jogarMoeda;
-    
+
     private Sons sons;
     private Socket servidorConexao;
     private ObjectOutputStream servidorSaida;
@@ -24,7 +24,7 @@ public class JogoGUI extends JFrame {
     private int escolha;
     private boolean podeEscolher; // true = Jogador 1 (escolhe lado); false = Jogador 2 (lado automatico)
 
-    public JogoGUI() throws Exception{
+    public JogoGUI() throws Exception {
 
         setTitle("Cara ou Coroa");
         setSize(300, 150);
@@ -32,7 +32,7 @@ public class JogoGUI extends JFrame {
         setLocationRelativeTo(null);
 
         construirInterface();
-        
+
         sons = new Sons("./sounds/selecionar.wav", "./sounds/vencedor.wav", "./sounds/perdedor.wav", "./sounds/moeda.wav");
         iniciar();
         conectar();
@@ -69,29 +69,29 @@ public class JogoGUI extends JFrame {
     private void escolherCara() {
 
         escolha = 0;
-
-        JOptionPane.showMessageDialog(this, "Você escolheu Cara.");
-        
-        try{
+        try {
             sons.selecionar();
-        }catch(Exception ex){
+            JOptionPane.showMessageDialog(this, "Você escolheu Cara.");
+
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
+
     }
 
     private void escolherCoroa() {
         escolha = 1;
-        JOptionPane.showMessageDialog(this, "Você escolheu Coroa.");
-        
-        try{
+
+        try {
             sons.selecionar();
-        }catch(Exception ex){
+            JOptionPane.showMessageDialog(this, "Você escolheu Coroa.");
+
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    private void jogar(){
+    private void jogar() {
         // só o jogador 1 escolhe uma opção, pois o segundo jogador ficará com o resultado restante
         //o jogador 2 só precisa clicar em jogar a moeda
         if (podeEscolher && escolha == -1) {
@@ -99,22 +99,20 @@ public class JogoGUI extends JFrame {
             return;
         }
 
-        try{
+        try {
             desabilitarOpcoes();
             sons.moeda();
             enviarEscolha();
-        }catch(Exception ex){
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
             dispose();
             return;
         }
 
         //espera o resultado em uma thread separada para a janela nao travar enquanto o outro jogador ainda nao jogou
-        
         new Thread(this::receberResultado).start();
     }
 
-    
     private String nomeLado(int valor) {
         return (valor == 0) ? "Cara" : "Coroa";
     }
@@ -131,7 +129,7 @@ public class JogoGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Parabéns! Você venceu!");
             try {
                 sons.vencedor();
-            }catch(Exception ex){
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
@@ -140,7 +138,7 @@ public class JogoGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Que pena! Você perdeu!");
             try {
                 sons.perdedor();
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
@@ -187,18 +185,17 @@ public class JogoGUI extends JFrame {
         coroa.setEnabled(false);
         jogarMoeda.setEnabled(false);
     }
-    
-    
-    private void conectar()throws Exception{
+
+    private void conectar() throws Exception {
         servidorConexao = new Socket(InetAddress.getByName(ConfigTXT.getIp()), ConfigTXT.getPorta());
-        
+
         servidorSaida = new ObjectOutputStream(servidorConexao.getOutputStream());
         servidorSaida.flush();
         servidorEntrada = new ObjectInputStream(servidorConexao.getInputStream());
-        
+
         String mensagem = (String) servidorEntrada.readObject();
         String[] info = mensagem.split(";");
-        
+
         podeEscolher = info[1].equals("true");
 
         if (podeEscolher) {
@@ -206,17 +203,17 @@ public class JogoGUI extends JFrame {
         } else {
             setTitle("Cara ou Coroa - Jogador 2 (lado automático)");
             JOptionPane.showMessageDialog(this, "Você é o Jogador 2.\nSeu lado será sempre o OPOSTO ao do Jogador 1 (automático)."
-                            + "\nÉ só clicar em \"Jogar Moeda\".");
+                    + "\nÉ só clicar em \"Jogar Moeda\".");
         }
 
         configurarBotoes();
     }
-    
-    private void enviarEscolha() throws Exception{
+
+    private void enviarEscolha() throws Exception {
         servidorSaida.writeObject(escolha);
         servidorSaida.flush();
     }
-    
+
     private void receberResultado() {
 
         try {
@@ -241,10 +238,10 @@ public class JogoGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        try{
+        try {
             new JogoGUI();
-        }catch(Exception ex){
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
-        }     
+        }
     }
 }
