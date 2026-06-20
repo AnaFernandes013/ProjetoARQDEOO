@@ -16,6 +16,7 @@ public class JogoGUI extends JFrame {
     private JButton coroa;
     private JButton jogarMoeda;
     
+    private Sons sons;
     private Socket servidorConexao;
     private ObjectOutputStream servidorSaida;
     private ObjectInputStream servidorEntrada;
@@ -31,7 +32,8 @@ public class JogoGUI extends JFrame {
         setLocationRelativeTo(null);
 
         construirInterface();
-
+        
+        sons = new Sons("./sounds/selecionar.wav", "./sounds/vencedor.wav", "./sounds/perdedor.wav", "./sounds/moeda.wav");
         iniciar();
         conectar();
 
@@ -69,13 +71,24 @@ public class JogoGUI extends JFrame {
         escolha = 0;
 
         JOptionPane.showMessageDialog(this, "Você escolheu Cara.");
+        
+        try{
+            sons.selecionar();
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
+        
     }
 
     private void escolherCoroa() {
-
         escolha = 1;
-
         JOptionPane.showMessageDialog(this, "Você escolheu Coroa.");
+        
+        try{
+            sons.selecionar();
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
     }
 
     private void jogar(){
@@ -88,6 +101,7 @@ public class JogoGUI extends JFrame {
 
         try{
             desabilitarOpcoes();
+            sons.moeda();
             enviarEscolha();
         }catch(Exception ex){
             JOptionPane.showMessageDialog(this, ex.getMessage());
@@ -115,10 +129,20 @@ public class JogoGUI extends JFrame {
         if (resultado == meuLado) {
 
             JOptionPane.showMessageDialog(this, "Parabéns! Você venceu!");
+            try {
+                sons.vencedor();
+            }catch(Exception ex){
+                ex.printStackTrace();
+            }
 
         } else {
 
             JOptionPane.showMessageDialog(this, "Que pena! Você perdeu!");
+            try {
+                sons.perdedor();
+            } catch(Exception ex) {
+                ex.printStackTrace();
+            }
 
         }
 

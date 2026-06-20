@@ -1,0 +1,2 @@
+20/06/2026 16:10:13  Jogador 1 escolheu Coroa e sobrou Cara para o Jogador 2  | Resultado: Coroa | Vencedor: Jogador 1
+20/06/2026 16:10:30  Jogador 1 escolheu Coroa e sobrou Cara para o Jogador 2  | Resultado: Cara | Vencedor: Jogador 2
